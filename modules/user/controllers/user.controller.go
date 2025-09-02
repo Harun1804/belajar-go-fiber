@@ -1,8 +1,8 @@
 package controllers
 
 import (
+	"belajar-go-fiber/modules/user/models"
 	"belajar-go-fiber/database"
-	"belajar-go-fiber/models"
 	"belajar-go-fiber/utils"
 	"strconv"
 

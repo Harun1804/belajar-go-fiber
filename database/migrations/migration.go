@@ -2,7 +2,7 @@ package migrations
 
 import (
 	"belajar-go-fiber/database"
-	"belajar-go-fiber/models"
+	"belajar-go-fiber/modules/user/models"
 	"fmt"
 )
 
