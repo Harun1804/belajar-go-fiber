@@ -2,6 +2,7 @@ package main
 
 import (
 	"belajar-go-fiber/configs"
+	"belajar-go-fiber/modules/books/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,9 +16,9 @@ func main() {
 
 	app := fiber.New()
 
-	app.Get("/api/*", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
+	// Register routes
+	api := app.Group("/api")
+	routes.RegisterBookRoutes(api)
 
 	app.Listen(":" + configs.GetEnv("APP_PORT", "3000"))
 }

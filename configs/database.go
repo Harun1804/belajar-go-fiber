@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"belajar-go-fiber/modules/books/models"
 	"fmt"
 	"log"
 
@@ -25,7 +26,7 @@ func InitDB() {
 
 	fmt.Println("Database connected successfully")
 
-	err = DB.AutoMigrate()
+	err = DB.AutoMigrate(&models.Book{})
 	if err != nil {
 		log.Fatal("Error migrating database: ", err)
 	}
