@@ -2,13 +2,15 @@ package migrations
 
 import (
 	"belajar-go-fiber/database"
-	"belajar-go-fiber/modules/user/models"
+	userModels "belajar-go-fiber/modules/user/models"
+	bookModels "belajar-go-fiber/modules/book/models"
 	"fmt"
 )
 
 func RunMigration() {
 	err := database.DB.AutoMigrate(
-		&models.User{},
+		&userModels.User{},
+		&bookModels.Book{},
 	)
 
 	if err != nil {
