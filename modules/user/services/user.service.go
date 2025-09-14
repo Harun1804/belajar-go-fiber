@@ -15,47 +15,55 @@ func NewUserService() *UserService {
 	return &UserService{}
 }
 
-func (s *UserService) GetAllUsers(page, pageSize int, sortBy, sortOrder string) ([]*dtos.UserResponse, int, int, error) {
-    var users []models.User
-    var totalData int64
+func (s *UserService) GetAllUsers(page, pageSize int, sortBy, sortOrder, keyword string) ([]*dtos.UserResponse, int, int, error) {
+	db := database.DB.Model(&models.User{})
+	var users []models.User
+	var totalData int64
 
-		// Count total data
-    if err := database.DB.Model(&models.User{}).Where("deleted_at IS NULL").Count(&totalData).Error; err != nil {
-        return nil, 0, 0, err
-    }
+	// Set default values if not provided
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if sortBy == "" {
+		sortBy = "id"
+	}
+	if sortOrder == "" {
+		sortOrder = "asc"
+	}
 
-    // Set default values if not provided
-    if page < 1 {
-        page = 1
-    }
-    if pageSize < 1 {
-        pageSize = 10
-    }
-    if sortBy == "" {
-        sortBy = "id"
-    }
-    if sortOrder == "" {
-        sortOrder = "asc"
-    }
+	offset := (page - 1) * pageSize
+	order := sortBy + " " + sortOrder
 
-    offset := (page - 1) * pageSize
-    order := sortBy + " " + sortOrder
+	if keyword != "" {
+		db = db.Where(
+			"COALESCE(name, '') LIKE ? OR COALESCE(email, '') LIKE ? OR COALESCE(phone, '') LIKE ?",
+			"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%",
+		)
+	}
 
-		if err := database.DB.Order(order).Limit(pageSize).Offset(offset).Find(&users).Error; err != nil {
-        return nil, 0, 0, err
-    }
+	// Count total data
+	if err := db.Where("deleted_at IS NULL").Count(&totalData).Error; err != nil {
+		return nil, 0, 0, err
+	}
 
-    var userResponses []*dtos.UserResponse
-    for _, user := range users {
-        userResponses = append(userResponses, &dtos.UserResponse{
-            ID:    user.ID,
-            Name:  user.Name,
-            Email: user.Email,
-            Phone: user.Phone,
-        })
-    }
-		totalPage := int((totalData + int64(pageSize) - 1) / int64(pageSize)) // ceil division
-    return userResponses, int(totalData), totalPage, nil
+	if err := db.Order(order).Limit(pageSize).Offset(offset).Find(&users).Error; err != nil {
+		return nil, 0, 0, err
+	}
+
+	var userResponses []*dtos.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, &dtos.UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Phone: user.Phone,
+		})
+	}
+	totalPage := int((totalData + int64(pageSize) - 1) / int64(pageSize)) // ceil division
+	return userResponses, int(totalData), totalPage, nil
 }
 
 func (s *UserService) GetUserById(id int) (*dtos.UserResponse, error) {

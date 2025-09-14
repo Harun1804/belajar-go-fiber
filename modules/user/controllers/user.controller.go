@@ -17,8 +17,9 @@ func GetAllUsers(c *fiber.Ctx) error {
     pageSize, _ := strconv.Atoi(c.Query("pageSize", "10"))
     sortBy := c.Query("sortBy", "id")
     sortOrder := c.Query("sortOrder", "asc")
+		keyword := c.Query("keyword", "")
 
-    users, totalData, totalPage, err := userService.GetAllUsers(page, pageSize, sortBy, sortOrder)
+    users, totalData, totalPage, err := userService.GetAllUsers(page, pageSize, sortBy, sortOrder, keyword)
     if err != nil {
         return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to get users", err.Error())
     }
