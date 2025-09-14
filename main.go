@@ -29,5 +29,5 @@ func main() {
 
 	routes.RouteInit(app)
 
-	app.Listen(":" + configs.GetEnv("APP_PORT", "3000"))
+	app.Listen(":" + configs.GetEnv("APP_PORT", "4000"))
 }
