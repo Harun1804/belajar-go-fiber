@@ -5,5 +5,4 @@ type UserResponse struct {
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	Phone     int    `json:"phone"`
-	Token     *string `json:"token,omitempty"`
 }

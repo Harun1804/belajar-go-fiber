@@ -74,6 +74,14 @@ func (s *UserService) GetUserById(id int) (*dtos.UserResponse, error) {
 	return &dtos.UserResponse{ID: user.ID, Name: user.Name, Email: user.Email, Phone: user.Phone}, nil
 }
 
+func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+	if err := database.DB.Debug().Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (s *UserService) CreateUser(userReq *dtos.UserCreateRequest) (*models.User, error) {
 	newUser := models.User{
 		Name:  userReq.Name,

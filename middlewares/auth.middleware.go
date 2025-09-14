@@ -42,7 +42,7 @@ func RequireAuthHeader(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Set("username", claims.Subject)
+	c.Set("user_id", claims.Subject)
 
 	return c.Next()
 }
