@@ -13,17 +13,17 @@ import (
 var userService = services.NewUserService()
 
 func GetAllUsers(c *fiber.Ctx) error {
-    page, _ := strconv.Atoi(c.Query("page", "1"))
-    pageSize, _ := strconv.Atoi(c.Query("pageSize", "10"))
-    sortBy := c.Query("sortBy", "id")
-    sortOrder := c.Query("sortOrder", "asc")
-		keyword := c.Query("keyword", "")
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize", "10"))
+	sortBy := c.Query("sortBy", "id")
+	sortOrder := c.Query("sortOrder", "asc")
+	keyword := c.Query("keyword", "")
 
-    users, totalData, totalPage, err := userService.GetAllUsers(page, pageSize, sortBy, sortOrder, keyword)
-    if err != nil {
-        return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to get users", err.Error())
-    }
-    return responseformatter.SendWithPaginationSuccess(c, "Success Get All Users", users, page, pageSize, totalData, totalPage)
+	users, totalData, totalPage, err := userService.GetAllUsers(page, pageSize, sortBy, sortOrder, keyword)
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to get users", err.Error())
+	}
+	return responseformatter.SendWithPaginationSuccess(c, "Success Get All Users", users, page, pageSize, totalData, totalPage)
 }
 
 func GetUserById(c *fiber.Ctx) error {
@@ -57,14 +57,22 @@ func UpdateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return responseformatter.SendError(c, fiber.StatusBadRequest, "Invalid user ID")
 	}
+
 	user := new(dtos.UserUpdateRequest)
-	user.ID = id
 	if err := c.BodyParser(user); err != nil {
 		return responseformatter.SendError(c, fiber.StatusBadRequest, "Failed to parse body", err.Error())
 	}
+
 	if messages, errValidate := validators.ValidateUserUpdateRequest(user); errValidate != nil {
 		return responseformatter.SendError(c, fiber.StatusUnprocessableEntity, "Failed to validate", messages)
 	}
+
+	checkingUser, err := userService.GetUserById(id)
+	if err != nil || checkingUser == nil {
+		return responseformatter.SendError(c, fiber.StatusNotFound, "User not found")
+	}
+
+	user.ID = checkingUser.ID
 	if _, err := userService.UpdateUser(user); err != nil {
 		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
 	}
