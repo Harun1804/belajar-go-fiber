@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	ID        int            `json:"id" gorm:"primaryKey"`
-	Name      string         `json:"name" form:"name" validate:"gte=6,lte=32" gorm:"not null"`
-	Email     string         `json:"email" form:"email" validate:"required,email" gorm:"not null"`
-	Password  string         `json:"-" form:"password" validate:"required,gte=5" gorm:"not null,colum:password"`
-	Phone     int            `json:"phone" form:"phone" validate:"required,number" gorm:"required,not null"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+    ID        int            `json:"id" gorm:"primaryKey"`
+    Name      string         `json:"name" gorm:"not null"`
+    Email     string         `json:"email" gorm:"not null, unique"`
+    Password  string         `json:"-" gorm:"not null,column:password"`
+    Phone     int            `json:"phone"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt gorm.DeletedAt `gorm:"index"`
 }

@@ -1,109 +1,86 @@
 package controllers
 
 import (
-	"belajar-go-fiber/modules/user/models"
-	"belajar-go-fiber/database"
-	"belajar-go-fiber/utils"
+	"belajar-go-fiber/modules/user/dtos"
+	"belajar-go-fiber/modules/user/services"
+	"belajar-go-fiber/modules/user/validators"
+	"belajar-go-fiber/utils/responseformatter"
 	"strconv"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
+var userService = services.NewUserService()
+
 func GetAllUsers(c *fiber.Ctx) error {
-	var users []*models.User
+    page, _ := strconv.Atoi(c.Query("page", "1"))
+    pageSize, _ := strconv.Atoi(c.Query("pageSize", "10"))
+    sortBy := c.Query("sortBy", "id")
+    sortOrder := c.Query("sortOrder", "asc")
 
-	database.DB.Debug().Find(&users)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Success Get All Users",
-		"users":   users,
-	})
-}
-
-func CreateUsers(c *fiber.Ctx) error {
-	user := new(models.User)
-
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(fiber.StatusServiceUnavailable).JSON(err.Error())
-	}
-
-	// Validation
-	validate := validator.New()
-	errValidate := validate.Struct(user)
-	if errValidate != nil {
-		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
-			"message": "failed to validate",
-			"error":   errValidate.Error(),
-		})
-	}
-
-	newUser := models.User{
-		Name:  user.Name,
-		Email: user.Email,
-		Phone: user.Phone,
-	}
-
-	hashPassword, err := utils.HashPassword(user.Password)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "status internal server error",
-		})
-	}
-
-	newUser.Password = hashPassword
-
-	database.DB.Debug().Create(&newUser)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Success Created new User",
-	})
+    users, totalData, totalPage, err := userService.GetAllUsers(page, pageSize, sortBy, sortOrder)
+    if err != nil {
+        return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to get users", err.Error())
+    }
+    return responseformatter.SendWithPaginationSuccess(c, "Success Get All Users", users, page, pageSize, totalData, totalPage)
 }
 
 func GetUserById(c *fiber.Ctx) error {
-	var user []*models.User
-
-	result := database.DB.Debug().First(&user, c.Params("id"))
-
-	if result.Error != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "User not found",
-		})
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusBadRequest, "Invalid user ID")
 	}
+	user, err := userService.GetUserById(id)
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusBadRequest, "User not found")
+	}
+	return responseformatter.SendSuccess(c, "Success Get User By Id", user)
+}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user": user,
-	})
+func CreateUsers(c *fiber.Ctx) error {
+	user := new(dtos.UserCreateRequest)
+	if err := c.BodyParser(user); err != nil {
+		return responseformatter.SendError(c, fiber.StatusServiceUnavailable, "Failed to parse body", err.Error())
+	}
+	if messages, errValidate := validators.ValidateUserCreateRequest(user); errValidate != nil {
+		return responseformatter.SendError(c, fiber.StatusUnprocessableEntity, "Failed to validate", messages)
+	}
+	if _, err := userService.CreateUser(user); err != nil {
+		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to create user", err.Error())
+	}
+	return responseformatter.SendSuccess(c, "Success Create New User")
 }
 
 func UpdateUser(c *fiber.Ctx) error {
-	user := new(models.User)
-
-	if err := c.BodyParser(user); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(err.Error())
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusBadRequest, "Invalid user ID")
 	}
-
-	id, _ := strconv.Atoi(c.Params("id"))
-
-	database.DB.Debug().Model(&models.User{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"name":  user.Name,
-		"email": user.Email,
-		"phone": user.Phone,
-	})
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "succes update user",
-	})
+	user := new(dtos.UserUpdateRequest)
+	user.ID = id
+	if err := c.BodyParser(user); err != nil {
+		return responseformatter.SendError(c, fiber.StatusBadRequest, "Failed to parse body", err.Error())
+	}
+	if messages, errValidate := validators.ValidateUserUpdateRequest(user); errValidate != nil {
+		return responseformatter.SendError(c, fiber.StatusUnprocessableEntity, "Failed to validate", messages)
+	}
+	if _, err := userService.UpdateUser(user); err != nil {
+		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
+	}
+	return responseformatter.SendSuccess(c, "Update user successfully")
 }
 
 func DeleteUser(c *fiber.Ctx) error {
-	user := new(models.User)
-
-	id, _ := strconv.Atoi(c.Params("id"))
-
-	database.DB.Debug().Where("id = ?", id).Delete(&user)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "delete user successfully",
-	})
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusBadRequest, "Invalid user ID")
+	}
+	user, err := userService.GetUserById(id)
+	if err != nil {
+		return responseformatter.SendError(c, fiber.StatusNotFound, "User not found")
+	}
+	if err := userService.DeleteUser(user.ID); err != nil {
+		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to delete user", err.Error())
+	}
+	return responseformatter.SendSuccess(c, "Delete user successfully")
 }
