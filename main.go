@@ -7,6 +7,7 @@ import (
 	"belajar-go-fiber/routes"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -14,6 +15,9 @@ func main() {
 
 	// Load environment variables
 	configs.LoadEnv()
+
+	// Load cors
+	app.Use(cors.New())
 
 	// Load database
 	database.InitDB()
