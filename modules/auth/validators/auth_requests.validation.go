@@ -2,6 +2,7 @@ package validators
 
 import (
 	"belajar-go-fiber/modules/auth/dtos"
+	"belajar-go-fiber/modules/user/validators"
 	"belajar-go-fiber/utils"
 
 	"github.com/go-playground/validator/v10"
@@ -11,6 +12,7 @@ var validate *validator.Validate
 
 func init() {
 	validate = validator.New()
+		_ = validate.RegisterValidation("unique_email", validators.UniqueEmail)
 }
 
 func ValidateLoginRequest(req *dtos.LoginRequest) (map[string][]string, error) {
