@@ -11,7 +11,7 @@ type User struct {
     Name      string         `json:"name" gorm:"not null"`
     Email     string         `json:"email" gorm:"not null, unique"`
     Password  string         `json:"-" gorm:"not null,column:password"`
-    Phone     int            `json:"phone"`
+    Phone     string         `json:"phone"`
     CreatedAt time.Time
     UpdatedAt time.Time
     DeletedAt gorm.DeletedAt `gorm:"index"`
