@@ -9,8 +9,8 @@ import (
 func RouteInit(r *fiber.App) {
 	api := r.Group("/api")
 	RegisterAuthRoute(api)
+	RegisterBookRoute(api)
 
 	apiProtected := api.Group("/", middlewares.RequireAuthHeader)
 	RegisterUserRoute(apiProtected)
-	RegisterBookRoute(apiProtected)
 }

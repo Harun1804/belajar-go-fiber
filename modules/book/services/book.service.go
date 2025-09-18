@@ -120,6 +120,13 @@ func (s *BookService) UpdateBook(id int,bookReq *dtos.BookUpdateRequest) (*model
 }
 
 func (S *BookService) DeleteBook(id int) error {
+	book, err := S.GetBookById(id)
+	if err != nil {
+		return err
+	}
+
+	err = media.DeleteFileFromMinio(book.Cover)
+
 	if err := database.DB.Delete(&models.Book{}, id).Error; err != nil {
 		return err
 	}
