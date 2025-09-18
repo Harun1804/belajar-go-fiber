@@ -42,6 +42,13 @@ func CreateBook(c *fiber.Ctx) error {
 		return responseformatter.SendError(c, fiber.StatusServiceUnavailable, "Failed to parse body", err.Error())
 	}
 
+	 // Parse file field
+	cover, err := c.FormFile("cover")
+	if err != nil {
+			return responseformatter.SendError(c, fiber.StatusBadRequest, "Cover file is required", err.Error())
+	}
+	book.Cover = cover
+
 	if messages, errValidate := validators.ValidateBookCreateRequest(book); errValidate != nil {
 		return responseformatter.SendError(c, fiber.StatusUnprocessableEntity, "Failed to validate", messages)
 	}
@@ -64,6 +71,12 @@ func UpdateBook(c *fiber.Ctx) error {
 		return responseformatter.SendError(c, fiber.StatusServiceUnavailable, "Failed to parse body", err.Error())
 	}
 
+	// Parse file field
+	cover, err := c.FormFile("cover")
+	if err == nil {
+			book.Cover = cover
+	}
+
 	if message, errValidate := validators.ValidateBookUpdateRequest(book); errValidate != nil {
 		return responseformatter.SendError(c, fiber.StatusUnprocessableEntity, "Failed to validate", message)
 	}
@@ -75,7 +88,7 @@ func UpdateBook(c *fiber.Ctx) error {
 
 	book.ID = checkBook.ID
 
-	if _, err := bookService.UpdateBook(book); err != nil {
+	if _, err := bookService.UpdateBook(checkBook.ID, book); err != nil {
 		return responseformatter.SendError(c, fiber.StatusInternalServerError, "Failed to update book", err.Error())
 	}
 

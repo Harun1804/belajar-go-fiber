@@ -5,6 +5,7 @@ import (
 	"belajar-go-fiber/database"
 	"belajar-go-fiber/database/migrations"
 	"belajar-go-fiber/routes"
+	"belajar-go-fiber/utils/media"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -24,6 +25,12 @@ func main() {
 
 	// Migration
 	migrations.RunMigration()
+
+	// Load Minio
+	err := media.InitMinio()
+	if err != nil {
+		panic(err)
+	}
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
