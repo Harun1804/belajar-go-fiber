@@ -69,19 +69,7 @@ func (s *BookService) GetBookById(id int) (*dtos.BookResponse, error) {
 
 func (s *BookService) CreateBook(bookReq *dtos.BookCreateRequest) (*models.Book, error) {
 	cover := bookReq.Cover
-	fileReader, err := cover.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer fileReader.Close()
-	
-	objectName, fileSize, contentType, err := media.ExtractFileData(cover)
-	if err != nil {
-		return nil, err
-	}
-
-	objectName = pathPrefix + objectName
-	_, err = media.SendFileToMinio(objectName, fileReader, fileSize, contentType)
+	objectName, err := media.UploadFileToMinio(cover, pathPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -116,29 +104,9 @@ func (s *BookService) UpdateBook(id int,bookReq *dtos.BookUpdateRequest) (*model
 
 	if bookReq.Cover != nil {
 		cover := bookReq.Cover
-		if book.Cover != "" {
-			fmt.Println("Deleting old cover:", book.Cover)
-			err := media.DeleteFileFromMinio(book.Cover)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		fileReader, err := cover.Open()
+		objectName, err := media.UpdateFileInMinio(book.Cover, cover, pathPrefix)
 		if err != nil {
-			return nil, err
-		}
-		defer fileReader.Close()
-		
-		objectName, fileSize, contentType, err := media.ExtractFileData(cover)
-		if err != nil {
-			return nil, err
-		}
-
-		objectName = pathPrefix + objectName
-		_, err = media.SendFileToMinio(objectName, fileReader, fileSize, contentType)
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to update cover: %v", err)
 		}
 
 		updatedBook.Cover = objectName

@@ -25,3 +25,41 @@ func ExtractFileData(fileHeader *multipart.FileHeader) (objectName string, fileS
 	contentType = fileHeader.Header.Get("Content-Type")
 	return objectName, fileSize, contentType, nil
 }
+
+func UploadFileToMinio(fileForm *multipart.FileHeader, pathPrefix string) (string, error) {
+	fileReader, err := fileForm.Open()
+	if err != nil {
+		return "", err
+	}
+	defer fileReader.Close()
+	
+	objectName, fileSize, contentType, err := ExtractFileData(fileForm)
+	if err != nil {
+		return "", err
+	}
+
+	objectName = pathPrefix + objectName
+	_, err = SendFileToMinio(objectName, fileReader, fileSize, contentType)
+	if err != nil {
+		return "", err
+	}
+
+	return objectName, nil
+}
+
+func UpdateFileInMinio(oldObjectName string, newFileForm *multipart.FileHeader, pathPrefix string) (string, error) {
+	if oldObjectName != "" {
+		deleteFile(oldObjectName)
+	}
+
+	return UploadFileToMinio(newFileForm, pathPrefix)
+}
+
+func deleteFile(objectName string) error {
+	err := DeleteFileFromMinio(objectName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
